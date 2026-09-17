@@ -6,7 +6,10 @@
   "scripts": {
     "test": "node --test",
     "typecheck": "tsc",
-    "audit:runtime": "npm audit --omit=dev --omit=peer"
+    "audit:runtime": "npm audit --omit=dev --omit=peer",
+    "build": "esbuild index.ts --bundle --format=esm --platform=node --target=node20 --outdir=dist --outbase=. --external:@mozilla/readability --external:defuddle --external:linkedom --external:p-limit --external:promise.try --external:turndown --external:typebox --external:unpdf --external:undici --external:@earendil-works/* --external:node:*",
+    "prepublishOnly": "npm run build && node scripts/pi-extensions-dist.js dist",
+    "postpublish": "node scripts/pi-extensions-dist.js index.ts"
   },
   "keywords": [
     "pi-package",
@@ -33,6 +36,7 @@
   },
   "homepage": "https://github.com/nicobailon/pi-web-access#readme",
   "files": [
+    "dist",
     "*.ts",
     "CHANGELOG.md",
     "SECURITY.md",
@@ -41,6 +45,7 @@
   ],
   "devDependencies": {
     "@types/turndown": "^5.0.6",
+    "esbuild": "^0.28.1",
     "typescript": "^7.0.2"
   },
   "dependencies": {
