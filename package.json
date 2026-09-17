@@ -7,7 +7,7 @@
     "test": "node --test",
     "typecheck": "tsc",
     "audit:runtime": "npm audit --omit=dev --omit=peer",
-    "build": "esbuild index.ts --bundle --format=esm --platform=node --target=node20 --outdir=dist --outbase=. --external:@mozilla/readability --external:defuddle --external:linkedom --external:p-limit --external:promise.try --external:turndown --external:typebox --external:unpdf --external:undici --external:@earendil-works/* --external:node:*",
+    "build": "node scripts/build.js",
     "prepublishOnly": "npm run build && node scripts/pi-extensions-dist.js dist",
     "postpublish": "node scripts/pi-extensions-dist.js index.ts",
     "release": "node scripts/publish.js"
@@ -67,7 +67,7 @@
   },
   "pi": {
     "extensions": [
-      "./index.ts"
+      "./dist"
     ],
     "video": "https://github.com/nicobailon/pi-web-access/raw/refs/heads/main/pi-web-fetch-demo.mp4"
   }
