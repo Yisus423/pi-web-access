@@ -10,6 +10,10 @@ All notable changes to this project will be documented in this file.
 - Added `webSearch.allowedProviders` to enforce one search-provider policy across web search, source checks, routing, aggregation, schemas, and Curator. Thanks [@Slooz](https://github.com/Slooz) for #396.
 - Added an explicit-only Serply Google Search provider with `serplyApiKey` / `SERPLY_API_KEY`, domain filtering, recency filtering, routing, and Curator support. Thanks to Serply vendor [@googio](https://github.com/googio) for PR #386.
 
+### Changed
+
+- Publish a precompiled bundle to improve installed startup performance while keeping TypeScript as the development entry point. Thanks to [@Yisus423](https://github.com/Yisus423) for [issue #418](https://github.com/nicobailon/pi-web-access/issues/418) and [PR #419](https://github.com/nicobailon/pi-web-access/pull/419).
+
 ### Fixed
 
 - Default fresh installs to the silent `none` web search workflow while preserving explicit and configured workflow modes. Thanks to [@ducaoya](https://github.com/ducaoya) for issue #416.

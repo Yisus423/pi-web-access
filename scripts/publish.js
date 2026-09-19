@@ -1,25 +1,16 @@
 #!/usr/bin/env node
-// Publish wrapper that guarantees pi.extensions restoration on any exit path.
-//
-// npm runs postpublish only on successful publish, so a failed or
-// interrupted publish leaves the manifest pointing at ./dist after
-// prepublishOnly rewrote it. This wrapper restores the manifest on normal
-// exit, on process exit, and on SIGINT/SIGTERM, covering every failure
-// mode except SIGKILL. Direct `npm publish` still works and relies on
-// postpublish (see package.json scripts); `npm run release` is the
-// recommended hardened path.
+// npm skips postpublish after a failed or interrupted publish, so use this
+// wrapper to restore pi.extensions. Direct `npm publish` still relies on
+// postpublish. SIGKILL cannot be handled and may leave the manifest on ./dist.
 //
 // Usage: npm run release [-- <npm publish args>]
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 
 const manifestPath = "package.json";
 const RESTORED_ENTRY = "./index.ts";
 
-let restored = false;
 function restore() {
-  if (restored) return;
-  restored = true;
   try {
     const pkg = JSON.parse(readFileSync(manifestPath, "utf8"));
     if (pkg.pi && Array.isArray(pkg.pi.extensions) && pkg.pi.extensions[0] !== RESTORED_ENTRY) {
@@ -32,16 +23,27 @@ function restore() {
   }
 }
 
-process.on("exit", restore);
-process.on("SIGINT", () => {
-  restore();
-  process.exit(130);
-});
-process.on("SIGTERM", () => {
-  restore();
-  process.exit(143);
+const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
+const child = spawn(npmCmd, ["publish", ...process.argv.slice(2)], { stdio: "inherit" });
+let requestedExitCode;
+
+function forwardSignal(signal, exitCode) {
+  if (requestedExitCode !== undefined) return;
+  requestedExitCode = exitCode;
+
+  // Wait for close before restoring so npm cannot rewrite afterward.
+  if (child.exitCode === null && child.signalCode === null) child.kill(signal);
+  else process.exitCode = exitCode;
+}
+
+process.on("SIGINT", () => forwardSignal("SIGINT", 130));
+process.on("SIGTERM", () => forwardSignal("SIGTERM", 143));
+
+child.on("error", (error) => {
+  console.error(`could not start npm publish: ${error.message}`);
 });
 
-const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
-const result = spawnSync(npmCmd, ["publish", ...process.argv.slice(2)], { stdio: "inherit" });
-process.exit(result.status ?? 1);
+child.on("close", (status) => {
+  restore();
+  process.exitCode = requestedExitCode ?? (status !== null && status >= 0 ? status : 1);
+});
